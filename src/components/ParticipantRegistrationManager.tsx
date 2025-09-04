@@ -41,22 +41,67 @@ export function ParticipantRegistrationManager({ onClose }: ParticipantRegistrat
     }
 
     // Prepare data for Excel
-    const excelData = filteredRegistrations.map((reg, index) => ({
-      'S.No': index + 1,
-      'Full Name': reg.fullName,
-      'College/University': reg.collegeUniversity,
-      'Department & Year': reg.departmentYear,
-      'Contact Number': reg.contactNumber,
-      'Email ID': reg.emailId,
-      'Team Name': reg.teamName || 'N/A',
-      'Team Size': reg.teamSize,
-      'Role in Team': reg.roleInTeam,
-      'Technical Skills': reg.technicalSkills,
-      'Previous Experience': reg.previousExperience || 'N/A',
-      'Agreed to Rules': reg.agreeToRules ? 'Yes' : 'No',
-      'Registration Date': new Date(reg.registeredAt).toLocaleDateString(),
-      'Registration Time': new Date(reg.registeredAt).toLocaleTimeString()
-    }));
+    const excelData = filteredRegistrations.map((reg, index) => {
+      const base = {
+        'S.No': index + 1,
+        'Event Name': reg.eventSpecificData?.eventTitle || 'N/A',
+        'Full Name': reg.fullName,
+        'College/University': reg.collegeUniversity,
+        'Department & Year': reg.departmentYear,
+        'Contact Number': reg.contactNumber,
+        'Email ID': reg.emailId,
+        'Team Name': reg.teamName || 'N/A',
+        'Team Size': reg.teamSize,
+        'Role in Team': reg.roleInTeam,
+        'Technical Skills': reg.technicalSkills,
+        'Previous Experience': reg.previousExperience || 'N/A',
+        'Agreed to Rules': reg.agreeToRules ? 'Yes' : 'No',
+        'Registration Date': new Date(reg.registeredAt).toLocaleDateString(),
+        'Registration Time': new Date(reg.registeredAt).toLocaleTimeString()
+      } as any;
+
+      const es = reg.eventSpecificData;
+      if (!es) return base;
+
+      // Personal
+      if (es.gender) base['Gender'] = es.gender;
+      if (es.city) base['City'] = es.city;
+      if (es.programBranch) base['Program/Branch'] = es.programBranch;
+      if (es.currentYear) base['Current Year'] = es.currentYear;
+
+      // Project/Startup/Robotics/ESports
+      if (es.projectTitle) base['Project Title'] = es.projectTitle;
+      if (es.projectAbstract) base['Project Abstract'] = es.projectAbstract;
+      if (es.projectDomain) base['Project Domain'] = es.projectDomain;
+      if (es.projectType) base['Project Type'] = es.projectType;
+      if (es.projectIdea) base['Project Idea'] = es.projectIdea;
+      if (es.startupName) base['Startup Name'] = es.startupName;
+      if (es.startupIdea) base['Startup Idea'] = es.startupIdea;
+      if (es.robotName) base['Robot Name'] = es.robotName;
+      if (es.botDimensions) base['Bot Dimensions'] = es.botDimensions;
+      if (es.selectedGame) base['Selected Game'] = es.selectedGame;
+      if (es.gameUsernames) base['Game Usernames'] = es.gameUsernames;
+      if (es.needsSpecialSetup !== undefined) base['Needs Special Setup'] = es.needsSpecialSetup ? 'Yes' : 'No';
+      if (es.additionalSpaceRequirements) base['Additional Space Requirements'] = es.additionalSpaceRequirements;
+      if (es.laptopAvailable !== undefined) base['Laptop Available'] = es.laptopAvailable ? 'Yes' : 'No';
+      if (es.eventCategory) base['Event Category'] = es.eventCategory;
+
+      // Team members
+      if (es.teamMembers && es.teamMembers.length > 0) {
+        es.teamMembers.forEach((m, i) => {
+          base[`Team Member ${i + 1} Name`] = m.name;
+          base[`Team Member ${i + 1} Email`] = m.emailId;
+          base[`Team Member ${i + 1} Contact`] = m.contactNumber;
+          base[`Team Member ${i + 1} College`] = m.college;
+          base[`Team Member ${i + 1} City`] = m.city;
+          base[`Team Member ${i + 1} Program`] = m.programBranch;
+          base[`Team Member ${i + 1} Year`] = m.currentYear;
+          base[`Team Member ${i + 1} Gender`] = m.gender;
+        });
+      }
+
+      return base;
+    });
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();

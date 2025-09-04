@@ -147,6 +147,7 @@ const applicationTables = {
     .index("by_upload_date", ["uploadedAt"]),
 
   participantRegistrations: defineTable({
+    eventId: v.optional(v.id("events")),
     fullName: v.string(),
     collegeUniversity: v.string(),
     departmentYear: v.string(),
@@ -159,11 +160,47 @@ const applicationTables = {
     previousExperience: v.optional(v.string()),
     agreeToRules: v.boolean(),
     registeredAt: v.number(),
-    ipAddress: v.optional(v.string())
+    ipAddress: v.optional(v.string()),
+    attachments: v.optional(v.array(v.id("files"))),
+    // Store all event-specific data for flexibility and export
+    eventSpecificData: v.optional(v.object({
+      gender: v.optional(v.string()),
+      city: v.optional(v.string()),
+      programBranch: v.optional(v.string()),
+      currentYear: v.optional(v.string()),
+      isTeam: v.optional(v.boolean()),
+      teamMembers: v.optional(v.array(v.object({
+        name: v.string(),
+        gender: v.string(),
+        contactNumber: v.string(),
+        emailId: v.string(),
+        college: v.string(),
+        city: v.string(),
+        programBranch: v.string(),
+        currentYear: v.string()
+      }))),
+      projectIdea: v.optional(v.string()),
+      projectTitle: v.optional(v.string()),
+      projectAbstract: v.optional(v.string()),
+      projectDomain: v.optional(v.string()),
+      projectType: v.optional(v.string()),
+      startupName: v.optional(v.string()),
+      startupIdea: v.optional(v.string()),
+      robotName: v.optional(v.string()),
+      botDimensions: v.optional(v.string()),
+      selectedGame: v.optional(v.string()),
+      gameUsernames: v.optional(v.string()),
+      needsSpecialSetup: v.optional(v.boolean()),
+      additionalSpaceRequirements: v.optional(v.string()),
+      laptopAvailable: v.optional(v.boolean()),
+      eventCategory: v.optional(v.string()),
+      eventTitle: v.optional(v.string())
+    }))
   })
     .index("by_email", ["emailId"])
     .index("by_college", ["collegeUniversity"])
-    .index("by_registration_date", ["registeredAt"]),
+    .index("by_registration_date", ["registeredAt"])
+    .index("by_event", ["eventId"]),
 
   organizerCredentials: defineTable({
     email: v.string(),
@@ -233,7 +270,54 @@ const applicationTables = {
     .index("by_participant", ["participantEmail"])
     .index("by_test_participant", ["testId", "participantEmail"])
     .index("by_status", ["status"])
-    .index("by_completed_at", ["completedAt"])
+    .index("by_completed_at", ["completedAt"]),
+
+  participatingInstitutions: defineTable({
+    name: v.string(),
+    type: v.union(v.literal("college"), v.literal("university"), v.literal("company")),
+    logo: v.optional(v.string()),
+    description: v.optional(v.string()),
+    website: v.optional(v.string()),
+    location: v.optional(v.string()),
+    studentCount: v.number(),
+    isActive: v.boolean(),
+    order: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_type", ["type"])
+    .index("by_active", ["isActive"])
+    .index("by_order", ["order"])
+    .index("by_type_active", ["type", "isActive"]),
+
+  newsUpdates: defineTable({
+    title: v.string(),
+    subtitle: v.optional(v.string()),
+    content: v.string(),
+    category: v.union(
+      v.literal("Announcement"), 
+      v.literal("Event Update"), 
+      v.literal("Important Notice"), 
+      v.literal("General News")
+    ),
+    image: v.optional(v.string()),
+    videoLink: v.optional(v.string()),
+    publishDate: v.number(),
+    authorName: v.string(),
+    authorEmail: v.string(),
+    status: v.union(v.literal("draft"), v.literal("published")),
+    attachments: v.optional(v.array(v.id("files"))),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    views: v.number(),
+    featured: v.boolean()
+  })
+    .index("by_status", ["status"])
+    .index("by_category", ["category"])
+    .index("by_author", ["authorEmail"])
+    .index("by_publish_date", ["publishDate"])
+    .index("by_featured", ["featured"])
+    .index("by_status_publish_date", ["status", "publishDate"]),
 };
 
 export default defineSchema({

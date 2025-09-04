@@ -5,7 +5,6 @@ import { SignInForm } from "../SignInForm";
 import { EventCard } from "./EventCard";
 import { EventsExplorer } from "./EventsExplorer";
 import { SignInRequiredModal } from "./SignInRequiredModal";
-import { ParticipantRegistrationManager } from "./ParticipantRegistrationManager";
 
 interface LandingPageProps {
   onSwitchToParticipant: () => void;
@@ -15,7 +14,6 @@ export function LandingPage({ onSwitchToParticipant }: LandingPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [showEventsExplorer, setShowEventsExplorer] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [showParticipantRegistrations, setShowParticipantRegistrations] = useState(false);
   const events = useQuery(api.events.list, { category: selectedCategory || undefined });
 
   const categories = [
@@ -58,15 +56,7 @@ export function LandingPage({ onSwitchToParticipant }: LandingPageProps) {
                 Manage Events
               </span>
             </button>
-            <button
-              onClick={() => setShowParticipantRegistrations(true)}
-              className="px-8 py-4 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg hover:scale-105 transform transition-all duration-300 shadow-lg shadow-supernova-gold/25 hover:shadow-supernova-gold/40"
-            >
-              <span className="flex items-center gap-2">
-                <span>📊</span>
-                View Registrations
-              </span>
-            </button>
+
             <button
               onClick={() => setShowSignInModal(true)}
               className="px-8 py-4 border-2 border-accent-blue text-silver font-bold rounded-lg hover:bg-accent-blue/20 transition-all duration-300 hover:shadow-lg hover:shadow-accent-blue/20"
@@ -163,12 +153,6 @@ export function LandingPage({ onSwitchToParticipant }: LandingPageProps) {
         <SignInRequiredModal
           onClose={() => setShowSignInModal(false)}
           action="create an event"
-        />
-      )}
-
-      {showParticipantRegistrations && (
-        <ParticipantRegistrationManager
-          onClose={() => setShowParticipantRegistrations(false)}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Id } from "../../convex/_generated/dataModel";
+import { EventSpecificRegistrationExport } from "./EventSpecificRegistrationExport";
 
 interface AllEventsManagerModalProps {
   events: any[];
@@ -12,6 +13,8 @@ export function AllEventsManagerModal({ events, onClose, onStatusUpdate }: AllEv
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "name" | "status">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showEventSpecificExport, setShowEventSpecificExport] = useState(false);
+  const [selectedEventForExport, setSelectedEventForExport] = useState<{id: Id<"events">, title: string} | null>(null);
 
   // Get organizer credentials to show organizer names
   // Temporarily disabled until function is deployed
@@ -197,7 +200,7 @@ export function AllEventsManagerModal({ events, onClose, onStatusUpdate }: AllEv
                           ₹{event.registrationFee || 0}
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
                             <select
                               value={event.status}
                               onChange={(e) => handleStatusChange(event._id, e.target.value as any)}
@@ -208,6 +211,22 @@ export function AllEventsManagerModal({ events, onClose, onStatusUpdate }: AllEv
                               <option value="ongoing">Ongoing</option>
                               <option value="completed">Completed</option>
                             </select>
+                            <button
+                              onClick={() => {
+                                setSelectedEventForExport({
+                                  id: event._id,
+                                  title: event.title
+                                });
+                                setShowEventSpecificExport(true);
+                              }}
+                              className="px-2 py-1 bg-gradient-to-r from-nebula-pink to-cosmic-purple hover:from-nebula-pink/80 hover:to-cosmic-purple/80 text-starlight-white rounded text-xs font-medium transition-colors flex items-center gap-1"
+                              title="Export Registrations"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Export
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -257,6 +276,24 @@ export function AllEventsManagerModal({ events, onClose, onStatusUpdate }: AllEv
                         </select>
                       </div>
                     </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => {
+                          setSelectedEventForExport({
+                            id: event._id,
+                            title: event.title
+                          });
+                          setShowEventSpecificExport(true);
+                        }}
+                        className="px-3 py-2 bg-gradient-to-r from-nebula-pink to-cosmic-purple hover:from-nebula-pink/80 hover:to-cosmic-purple/80 text-starlight-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export Registrations
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -272,6 +309,18 @@ export function AllEventsManagerModal({ events, onClose, onStatusUpdate }: AllEv
           </div>
         </div>
       </div>
+
+      {/* Event Specific Export Modal */}
+      {showEventSpecificExport && selectedEventForExport && (
+        <EventSpecificRegistrationExport
+          eventId={selectedEventForExport.id}
+          eventTitle={selectedEventForExport.title}
+          onClose={() => {
+            setShowEventSpecificExport(false);
+            setSelectedEventForExport(null);
+          }}
+        />
+      )}
     </div>
   );
 }

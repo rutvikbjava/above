@@ -630,3 +630,65 @@ export const updateRegistrationStatus = mutation({
     return { success: true };
   },
 });
+
+// Update event details (super admin only)
+export const updateEvent = mutation({
+  args: {
+    eventId: v.id("events"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    category: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    location: v.optional(v.string()),
+    maxParticipants: v.optional(v.number()),
+    registrationDeadline: v.optional(v.string()),
+    requirements: v.optional(v.array(v.string())),
+    prizes: v.optional(v.array(v.object({
+      position: v.string(),
+      prize: v.string(),
+      amount: v.optional(v.number())
+    }))),
+    tags: v.optional(v.array(v.string())),
+    eventImage: v.optional(v.string()),
+    registrationFee: v.optional(v.number()),
+    paymentLink: v.optional(v.string()),
+    superAdminEmail: v.string(),
+    superAdminPassword: v.string()
+  },
+  returns: v.object({ success: v.boolean() }),
+  handler: async (ctx, args) => {
+    // Verify super admin credentials
+    const SUPER_ADMIN_EMAIL = "rutvikburra@gmail.com";
+    const SUPER_ADMIN_PASSWORD = "rutvikburra1234567890@#E";
+
+    if (args.superAdminEmail !== SUPER_ADMIN_EMAIL || args.superAdminPassword !== SUPER_ADMIN_PASSWORD) {
+      throw new Error("Invalid super admin credentials");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Prepare update object with only provided fields
+    const updateData: any = {};
+    if (args.title !== undefined) updateData.title = args.title;
+    if (args.description !== undefined) updateData.description = args.description;
+    if (args.category !== undefined) updateData.category = args.category;
+    if (args.startDate !== undefined) updateData.startDate = args.startDate;
+    if (args.endDate !== undefined) updateData.endDate = args.endDate;
+    if (args.location !== undefined) updateData.location = args.location;
+    if (args.maxParticipants !== undefined) updateData.maxParticipants = args.maxParticipants;
+    if (args.registrationDeadline !== undefined) updateData.registrationDeadline = args.registrationDeadline;
+    if (args.requirements !== undefined) updateData.requirements = args.requirements;
+    if (args.prizes !== undefined) updateData.prizes = args.prizes;
+    if (args.tags !== undefined) updateData.tags = args.tags;
+    if (args.eventImage !== undefined) updateData.eventImage = args.eventImage;
+    if (args.registrationFee !== undefined) updateData.registrationFee = args.registrationFee;
+    if (args.paymentLink !== undefined) updateData.paymentLink = args.paymentLink;
+
+    await ctx.db.patch(args.eventId, updateData);
+    return { success: true };
+  },
+});

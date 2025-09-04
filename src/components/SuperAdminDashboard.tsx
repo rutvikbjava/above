@@ -3,7 +3,10 @@ import { useQuery, useMutation } from "convex/react";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
 import { ParticipantRegistrationManager } from "./ParticipantRegistrationManager";
+import { ParticipatingInstitutionsManager } from "./ParticipatingInstitutionsManager";
 import { PreQualifierTestManager } from "./PreQualifierTestManager";
+import { NewsListManager } from "./NewsListManager";
+import { EventSpecificRegistrationExport } from "./EventSpecificRegistrationExport";
 import { Id } from "../../convex/_generated/dataModel";
 
 interface SuperAdminDashboardProps {
@@ -19,7 +22,12 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [showEventManagement, setShowEventManagement] = useState(false);
+  const [showInstitutionsManager, setShowInstitutionsManager] = useState(false);
+  const [showNewsManager, setShowNewsManager] = useState(false);
+  const [showEventSpecificExport, setShowEventSpecificExport] = useState(false);
+  const [selectedEventForExport, setSelectedEventForExport] = useState<{id: Id<"events">, title: string} | null>(null);
   const [editingPaymentLink, setEditingPaymentLink] = useState<{eventId: Id<"events">, currentLink: string} | null>(null);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
   // Super admin credentials (these would be securely stored in production)
   const SUPER_ADMIN_EMAIL = "rutvikburra@gmail.com";
@@ -33,6 +41,7 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
   const deleteAllEvents = useMutation(api.superAdmin.deleteAllEvents);
   const events = useQuery(api.events.list, {});
   const updatePaymentLink = useMutation(api.events.updatePaymentLink);
+  const updateEvent = useMutation(api.events.updateEvent);
 
   const stats = useQuery(api.superAdmin.getOrganizerJudgeStats, {
     superAdminEmail: SUPER_ADMIN_EMAIL,
@@ -133,6 +142,21 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
     }
   };
 
+  const handleUpdateEvent = async (eventId: Id<"events">, eventData: any) => {
+    try {
+      await updateEvent({
+        eventId,
+        ...eventData,
+        superAdminEmail: SUPER_ADMIN_EMAIL,
+        superAdminPassword: SUPER_ADMIN_PASSWORD
+      });
+      toast.success("Event updated successfully! 🎉");
+      setEditingEvent(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update event");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-space-navy via-charcoal to-dark-blue">
       {/* Header */}
@@ -192,7 +216,7 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
           <button
             onClick={() => setShowParticipantData(true)}
             className="p-6 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-lg"
@@ -230,14 +254,16 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
           </button>
 
           <button
-            onClick={async () => {
+            onClick={() => {
               if (window.confirm('Are you sure you want to delete ALL events? This cannot be undone!')) {
-                try {
-                  const result = await deleteAllEvents();
-                  toast.success(`Deleted ${result.deletedEvents} events and ${result.deletedRegistrations} registrations`);
-                } catch (error) {
-                  toast.error('Failed to delete events');
-                }
+                void (async () => {
+                  try {
+                    const result = await deleteAllEvents();
+                    toast.success(`Deleted ${result.deletedEvents} events and ${result.deletedRegistrations} registrations`);
+                  } catch {
+                    toast.error('Failed to delete events');
+                  }
+                })();
               }
             }}
             className="p-6 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-lg"
@@ -245,6 +271,24 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
             <div className="text-2xl mb-2">🗑️</div>
             <div>Delete All Events</div>
             <div className="text-sm opacity-80">Reset event data</div>
+          </button>
+
+          <button
+            onClick={() => setShowInstitutionsManager(true)}
+            className="p-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-lg"
+          >
+            <div className="text-2xl mb-2">🏫</div>
+            <div>Manage Institutions</div>
+            <div className="text-sm opacity-80">Colleges & Sponsors</div>
+          </button>
+
+          <button
+            onClick={() => setShowNewsManager(true)}
+            className="p-6 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-lg"
+          >
+            <div className="text-2xl mb-2">📰</div>
+            <div>Manage News & Updates</div>
+            <div className="text-sm opacity-80">Create announcements</div>
           </button>
 
           <button
@@ -354,7 +398,9 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
                         </button>
                         
                         <button
-                          onClick={() => handleToggleStatus(user._id, !user.isActive)}
+                          onClick={() => {
+                            void handleToggleStatus(user._id, !user.isActive);
+                          }}
                           className={`p-2 rounded-lg transition-colors ${
                             user.isActive 
                               ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
@@ -366,7 +412,9 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
                         </button>
                         
                         <button
-                          onClick={() => handleDeleteUser(user._id)}
+                          onClick={() => {
+                            void handleDeleteUser(user._id);
+                          }}
                           className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                           title="Delete User"
                         >
@@ -443,16 +491,82 @@ export function SuperAdminDashboard({ onSignOut }: SuperAdminDashboardProps) {
           events={events || []}
           onClose={() => setShowEventManagement(false)}
           onUpdatePaymentLink={handleUpdatePaymentLink}
+          onUpdateEvent={handleUpdateEvent}
           editingPaymentLink={editingPaymentLink}
           setEditingPaymentLink={setEditingPaymentLink}
+          editingEvent={editingEvent}
+          setEditingEvent={setEditingEvent}
+          setSelectedEventForExport={setSelectedEventForExport}
+          setShowEventSpecificExport={setShowEventSpecificExport}
         />
+      )}
+
+      {showInstitutionsManager && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-space-navy/95 backdrop-blur-md border border-medium-blue/30 rounded-2xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-starlight-white">Manage Institutions</h2>
+              <button
+                onClick={() => setShowInstitutionsManager(false)}
+                className="text-starlight-white/60 hover:text-starlight-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <ParticipatingInstitutionsManager />
+          </div>
+        </div>
+      )}
+
+      {showEventSpecificExport && selectedEventForExport && (
+        <EventSpecificRegistrationExport
+          eventId={selectedEventForExport.id}
+          eventTitle={selectedEventForExport.title}
+          onClose={() => {
+            setShowEventSpecificExport(false);
+            setSelectedEventForExport(null);
+          }}
+        />
+      )}
+
+      {showNewsManager && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-space-navy/95 backdrop-blur-xl border border-white/20 rounded-2xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-starlight-white">News & Updates Management</h2>
+                <button
+                  onClick={() => setShowNewsManager(false)}
+                  className="text-starlight-white/60 hover:text-starlight-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <NewsListManager
+                authorEmail={SUPER_ADMIN_EMAIL}
+                authorName="Super Admin"
+                isAdmin={true}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
 // Create User Modal Component
-function CreateUserModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (data: any) => void }) {
+function CreateUserModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (data: any) => unknown;
+}) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -464,7 +578,7 @@ function CreateUserModal({ onClose, onSubmit }: { onClose: () => void; onSubmit:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    void onSubmit(formData);
   };
 
   return (
@@ -549,12 +663,20 @@ function CreateUserModal({ onClose, onSubmit }: { onClose: () => void; onSubmit:
 }
 
 // Password Reset Modal Component
-function PasswordResetModal({ user, onClose, onSubmit }: { user: any; onClose: () => void; onSubmit: (password: string) => void }) {
+function PasswordResetModal({
+  user,
+  onClose,
+  onSubmit,
+}: {
+  user: any;
+  onClose: () => void;
+  onSubmit: (password: string) => unknown;
+}) {
   const [newPassword, setNewPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(newPassword);
+    void onSubmit(newPassword);
   };
 
   return (
@@ -601,22 +723,68 @@ function EventManagementModal({
   events,
   onClose,
   onUpdatePaymentLink,
+  onUpdateEvent,
   editingPaymentLink,
-  setEditingPaymentLink
+  setEditingPaymentLink,
+  editingEvent,
+  setEditingEvent,
+  setSelectedEventForExport,
+  setShowEventSpecificExport
 }: {
   events: any[];
   onClose: () => void;
-  onUpdatePaymentLink: (eventId: Id<"events">, paymentLink: string) => void;
-  editingPaymentLink: {eventId: Id<"events">, currentLink: string} | null;
-  setEditingPaymentLink: (value: {eventId: Id<"events">, currentLink: string} | null) => void;
+  onUpdatePaymentLink: (
+    eventId: Id<"events">,
+    paymentLink: string,
+  ) => unknown;
+  onUpdateEvent: (
+    eventId: Id<"events">,
+    eventData: any,
+  ) => unknown;
+  editingPaymentLink: { eventId: Id<"events">; currentLink: string } | null;
+  setEditingPaymentLink: (
+    value: { eventId: Id<"events">; currentLink: string } | null,
+  ) => void;
+  editingEvent: any;
+  setEditingEvent: (value: any) => void;
+  setSelectedEventForExport: (value: {id: Id<"events">, title: string} | null) => void;
+  setShowEventSpecificExport: (value: boolean) => void;
 }) {
   const [paymentLinkInput, setPaymentLinkInput] = useState("");
+  const [eventFormData, setEventFormData] = useState<any>({});
 
   const handleSubmitPaymentLink = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingPaymentLink && paymentLinkInput.trim()) {
-      onUpdatePaymentLink(editingPaymentLink.eventId, paymentLinkInput.trim());
+      void onUpdatePaymentLink(editingPaymentLink.eventId, paymentLinkInput.trim());
     }
+  };
+
+  const handleSubmitEventEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingEvent && eventFormData) {
+      void onUpdateEvent(editingEvent._id, eventFormData);
+    }
+  };
+
+  const initializeEventForm = (event: any) => {
+    setEditingEvent(event);
+    setEventFormData({
+      title: event.title || "",
+      description: event.description || "",
+      category: event.category || "",
+      startDate: event.startDate || "",
+      endDate: event.endDate || "",
+      location: event.location || "",
+      maxParticipants: event.maxParticipants || 0,
+      registrationDeadline: event.registrationDeadline || "",
+      registrationFee: event.registrationFee || 0,
+      paymentLink: event.paymentLink || "",
+      eventImage: event.eventImage || "",
+      requirements: event.requirements || [],
+      prizes: event.prizes || [],
+      tags: event.tags || []
+    });
   };
 
   return (
@@ -665,18 +833,42 @@ function EventManagementModal({
                       {event.paymentLink || "No payment link set"}
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setEditingPaymentLink({
-                        eventId: event._id,
-                        currentLink: event.paymentLink || ""
-                      });
-                      setPaymentLinkInput(event.paymentLink || "");
-                    }}
-                    className="px-4 py-2 bg-supernova-gold hover:bg-supernova-gold/80 text-space-navy rounded font-medium transition-colors"
-                  >
-                    Update Link
-                  </button>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => initializeEventForm(event)}
+                      className="px-3 py-2 bg-accent-blue hover:bg-accent-blue/80 text-starlight-white rounded font-medium transition-colors text-sm"
+                    >
+                      Edit Event
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPaymentLink({
+                          eventId: event._id,
+                          currentLink: event.paymentLink || ""
+                        });
+                        setPaymentLinkInput(event.paymentLink || "");
+                      }}
+                      className="px-3 py-2 bg-supernova-gold hover:bg-supernova-gold/80 text-space-navy rounded font-medium transition-colors text-sm"
+                    >
+                      Update Link
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedEventForExport({
+                          id: event._id,
+                          title: event.title
+                        });
+                        setShowEventSpecificExport(true);
+                        onClose();
+                      }}
+                      className="px-3 py-2 bg-gradient-to-r from-nebula-pink to-cosmic-purple hover:from-nebula-pink/80 hover:to-cosmic-purple/80 text-starlight-white rounded font-medium transition-colors text-sm flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Export
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -716,6 +908,146 @@ function EventManagementModal({
                     className="flex-1 px-4 py-2 bg-supernova-gold hover:bg-supernova-gold/80 text-space-navy rounded font-medium transition-colors"
                   >
                     Update
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Event Edit Modal */}
+        {editingEvent && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-60">
+            <div className="bg-space-navy/95 backdrop-blur-md border border-medium-blue/30 rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-starlight-white mb-4">Edit Event</h3>
+              <form onSubmit={handleSubmitEventEdit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Event Title:</label>
+                    <input
+                      type="text"
+                      value={eventFormData.title}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Category:</label>
+                    <input
+                      type="text"
+                      value={eventFormData.category}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Start Date:</label>
+                    <input
+                      type="datetime-local"
+                      value={eventFormData.startDate}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">End Date:</label>
+                    <input
+                      type="datetime-local"
+                      value={eventFormData.endDate}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Location:</label>
+                    <input
+                      type="text"
+                      value={eventFormData.location}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, location: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Max Participants:</label>
+                    <input
+                      type="number"
+                      value={eventFormData.maxParticipants}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, maxParticipants: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Registration Deadline:</label>
+                    <input
+                      type="datetime-local"
+                      value={eventFormData.registrationDeadline}
+                      //onChange={(e) => setEventFormData(prev => ({ ...prev, registrationDeadline: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-starlight-white/70 text-sm mb-2">Registration Fee (₹):</label>
+                    <input
+                      type="number"
+                      value={eventFormData.registrationFee}
+                     // onChange={(e) => setEventFormData(prev => ({ ...prev, registrationFee: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-starlight-white/70 text-sm mb-2">Description:</label>
+                  <textarea
+                    value={eventFormData.description}
+                    //onChange={(e) => setEventFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-starlight-white/70 text-sm mb-2">Event Image URL:</label>
+                  <input
+                    type="url"
+                    value={eventFormData.eventImage}
+                    //onChange={(e) => setEventFormData(prev => ({ ...prev, eventImage: e.target.value }))}
+                    className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-starlight-white/70 text-sm mb-2">Payment Link:</label>
+                  <input
+                    type="url"
+                    value={eventFormData.paymentLink}
+                    //onChange={(e) => setEventFormData(prev => ({ ...prev, paymentLink: e.target.value }))}
+                    className="w-full px-3 py-2 bg-dark-blue/40 border border-medium-blue/30 rounded text-starlight-white placeholder-starlight-white/40 focus:border-supernova-gold focus:ring-1 focus:ring-supernova-gold outline-none"
+                    placeholder="https://payment-gateway.com/event-payment"
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingEvent(null);
+                      setEventFormData({});
+                    }}
+                    className="flex-1 px-4 py-2 bg-medium-blue hover:bg-medium-blue/80 text-starlight-white rounded transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-supernova-gold hover:bg-supernova-gold/80 text-space-navy rounded font-medium transition-colors"
+                  >
+                    Update Event
                   </button>
                 </div>
               </form>

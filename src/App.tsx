@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthWrapper } from "./components/AuthWrapper";
 import { ParticipantLandingPage } from "./components/ParticipantLandingPage";
 import { SuperAdminLogin } from "./components/SuperAdminLogin";
 import { SuperAdminDashboard } from "./components/SuperAdminDashboard";
 import { SimpleVideoBackground } from "./components/SimpleVideoBackground";
+import { EventPage } from "./components/EventPage";
+// Alternative: Use AnimatedGalaxyBackground for more sophisticated effects
+// import { AnimatedGalaxyBackground } from "./components/AnimatedGalaxyBackground";
 
 // Watermark Component
 const Watermark = () => (
@@ -20,24 +24,12 @@ export default function App() {
   const [showSuperAdminLogin, setShowSuperAdminLogin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // Check for super admin access via URL parameter or keyboard shortcut
+  // Check for super admin access via URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('admin') === 'super') {
       setShowSuperAdminLogin(true);
     }
-    
-
-    // Secret keyboard shortcut: Ctrl+Shift+Alt+S
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.altKey && e.key === 'S') {
-        e.preventDefault();
-        setShowSuperAdminLogin(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handleSuperAdminSuccess = () => {
@@ -53,50 +45,76 @@ export default function App() {
   // If super admin is authenticated, show super admin dashboard (NO video background)
   if (isSuperAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <main className="container max-w-2xl flex flex-col gap-8 relative z-10 pt-8 px-4">
-          <SuperAdminDashboard onSignOut={handleSuperAdminSignOut} />
-          <Toaster position="bottom-right" />
-        </main>
+      <>
+        <SuperAdminDashboard onSignOut={handleSuperAdminSignOut} />
+        <Toaster position="bottom-right" />
         <Watermark />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <SimpleVideoBackground />
-      <main className="relative z-10">
-        {viewMode === "participant" ? (
-          <ParticipantLandingPage onSwitchToOrganizer={() => setViewMode("organizer")} />
-        ) : (
-          <AuthWrapper />
-        )}
-      </main>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <div className="min-h-screen relative overflow-hidden">
+            <SimpleVideoBackground />
+            <main className="relative z-10">
+              {viewMode === "participant" ? (
+                <ParticipantLandingPage onSwitchToOrganizer={() => setViewMode("organizer")} />
+              ) : (
+                <AuthWrapper />
+              )}
+            </main>
 
-      {/* Super Admin Login Modal */}
-      {showSuperAdminLogin && (
-        <SuperAdminLogin
-          onSuccess={handleSuperAdminSuccess}
-          onCancel={() => setShowSuperAdminLogin(false)}
-        />
-      )}
+            {/* Super Admin Login Modal */}
+            {showSuperAdminLogin && (
+              <SuperAdminLogin
+                onSuccess={handleSuperAdminSuccess}
+                onCancel={() => setShowSuperAdminLogin(false)}
+              />
+            )}
 
-      <Toaster
-        theme="dark"
-        toastOptions={{
-          style: {
-            background: 'rgba(15, 23, 42, 0.95)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            color: '#F1F5F9',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)'
-          }
-        }}
+            <Toaster
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: 'rgba(15, 23, 42, 0.95)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  color: '#F1F5F9',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)'
+                }
+              }}
+            />
+
+            {/* Watermark */}
+            <Watermark />
+          </div>
+        }
       />
-
-      {/* Watermark */}
-      <Watermark />
-    </div>
+      <Route path="/events/:eventId" element={
+        <div className="min-h-screen relative overflow-hidden">
+          <SimpleVideoBackground />
+          <main className="relative z-10">
+            <EventPage />
+          </main>
+          <Toaster
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                color: '#F1F5F9',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)'
+              }
+            }}
+          />
+          <Watermark />
+        </div>
+      } />
+    </Routes>
   );
 }

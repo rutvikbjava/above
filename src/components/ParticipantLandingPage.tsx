@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { ParticipantRegistrationForm } from "./ParticipantRegistrationForm";
 import { ParticipantTestPage } from "./ParticipantTestPage";
-import { EventRegistrationModal } from "./EventRegistrationModal";
+import { EventCard } from "./EventCard";
+import { EventSelectionModal } from "./EventSelectionModal";
+import { EventSpecificRegistrationForm } from "./EventSpecificRegistrationForm";
+import { NewsUpdatesSection } from "./NewsUpdatesSection";
 import { Id } from "../../convex/_generated/dataModel";
 
 interface ParticipantLandingPageProps {
@@ -11,20 +13,18 @@ interface ParticipantLandingPageProps {
 }
 
 export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandingPageProps) {
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [showEventSelection, setShowEventSelection] = useState(false);
+  const [showSpecificRegistration, setShowSpecificRegistration] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<Id<"events"> | null>(null);
   const [showPreQualifierTests, setShowPreQualifierTests] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<{
-    _id: Id<"events">;
-    title: string;
-    registrationFee: number;
-    paymentLink?: string;
-  } | null>(null);
 
   const events = useQuery(api.events.list, {});
   const publishedEvents = events?.filter(event => event.status === "published") || [];
   const allEvents = events || [];
   const testNotification = useQuery(api.preQualifierTests.getUpcomingTestsNotification);
+  const participatingInstitutions = useQuery(api.participatingInstitutions.getActiveInstitutions);
+  const activeSponsors = useQuery(api.participatingInstitutions.getActiveSponsors);
 
 
   return (
@@ -40,14 +40,14 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
                 <span className="text-space-navy font-bold text-sm sm:text-lg">🚀</span>
               </div>
               <span className="text-lg sm:text-xl lg:text-2xl font-bold text-starlight-white">
-                Technical Fest
+                Tech Fest
               </span>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-2 xl:gap-4">
               <button
-                onClick={() => setShowRegistrationForm(true)}
+                onClick={() => setShowEventSelection(true)}
                 className="px-3 xl:px-6 py-2 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg hover:scale-105 transform transition-all duration-300 shadow-lg backdrop-blur-sm text-sm xl:text-base"
               >
                 Register Now
@@ -73,21 +73,6 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
                 )}
               </div>
 
-              <button
-                onClick={() => {
-                  // Trigger super admin login
-                  const event = new KeyboardEvent('keydown', {
-                    key: 'S',
-                    ctrlKey: true,
-                    shiftKey: true,
-                    altKey: true
-                  });
-                  document.dispatchEvent(event);
-                }}
-                className="px-3 xl:px-4 py-2 border border-white/20 text-starlight-white rounded-lg hover:bg-white/10 transition-colors text-xs xl:text-sm"
-              >
-                Super Admin
-              </button>
 
               <button
                 onClick={onSwitchToOrganizer}
@@ -121,7 +106,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
               <div className="px-4 py-4 space-y-3">
                 <button
                   onClick={() => {
-                    setShowRegistrationForm(true);
+                    setShowEventSelection(true);
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full px-4 py-3 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg text-center touch-manipulation"
@@ -150,22 +135,6 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
                   )}
                 </div>
 
-                <button
-                  onClick={() => {
-                    // Trigger super admin login
-                    const event = new KeyboardEvent('keydown', {
-                      key: 'S',
-                      ctrlKey: true,
-                      shiftKey: true,
-                      altKey: true
-                    });
-                    document.dispatchEvent(event);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-3 border border-white/20 text-starlight-white rounded-lg text-center touch-manipulation"
-                >
-                  Super Admin
-                </button>
 
                 <button
                   onClick={() => {
@@ -191,7 +160,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
             <div className="relative z-10 p-4 sm:p-6 lg:p-8">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-starlight-white mb-4 sm:mb-6 leading-tight drop-shadow-2xl">
                 <span className="block bg-gradient-to-r from-supernova-gold via-electric-blue to-nebula-pink bg-clip-text text-transparent drop-shadow-lg">
-                  Supernova
+                  SuperNova
                 </span>
                 <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-starlight-white/90 mt-1 sm:mt-2">
                   Technical Fest
@@ -206,7 +175,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           <div className="relative z-10">
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-12 px-2 sm:px-0">
               <button
-                onClick={() => setShowRegistrationForm(true)}
+                onClick={() => setShowEventSelection(true)}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl shadow-supernova-gold/40 backdrop-blur-md border border-white/20 min-h-[48px] touch-manipulation"
               >
                 🚀 Register for Technical Fest
@@ -223,7 +192,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto px-4 sm:px-0">
             <div className="text-center bg-space-navy/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10">
-              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-supernova-gold mb-2">500+</div>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-supernova-gold mb-2">5000+</div>
               <div className="text-sm sm:text-base text-starlight-white/70">Participants</div>
             </div>
             <div className="text-center bg-space-navy/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10">
@@ -234,34 +203,6 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
               <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-nebula-pink mb-2">48hrs</div>
               <div className="text-sm sm:text-base text-starlight-white/70">Coding Marathon</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* College Promotions */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white/5 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-starlight-white mb-8 sm:mb-12">
-            🎓 Participating Colleges & Universities
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {[
-              { name: "IIT Delhi", students: "150+", logo: "🏛️" },
-              { name: "NIT Trichy", students: "120+", logo: "🎯" },
-              { name: "BITS Pilani", students: "100+", logo: "⭐" },
-              { name: "VIT Vellore", students: "80+", logo: "🚀" },
-              { name: "SRM University", students: "90+", logo: "💎" },
-              { name: "Manipal Institute", students: "70+", logo: "🌟" }
-            ].map((college, index) => (
-              <div key={index} className="p-4 sm:p-6 bg-dark-blue/40 backdrop-blur-md border border-medium-blue/30 rounded-xl hover:border-accent-blue/40 hover:shadow-xl transition-all duration-300">
-                <div className="text-center">
-                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">{college.logo}</div>
-                  <h3 className="text-lg sm:text-xl font-bold text-starlight-white mb-2">{college.name}</h3>
-                  <p className="text-sm sm:text-base text-supernova-gold font-semibold">{college.students} Students Registered</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -277,235 +218,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           {publishedEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {publishedEvents.map((event) => (
-                <div key={event._id} className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-stellar-blue via-cosmic-purple to-nebula-pink p-1 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cosmic-purple/20 transition-all duration-500">
-                  <div className="relative h-full bg-space-navy/95 backdrop-blur-md rounded-xl overflow-hidden min-h-[600px] flex flex-col">
-                    {/* Event Image */}
-                    <div className="relative h-48 sm:h-56 overflow-hidden flex-shrink-0">
-                      {event.eventImage ? (
-                        <>
-                          <img
-                            src={event.eventImage}
-                            alt={event.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-space-navy/90 via-space-navy/30 to-transparent"></div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-cosmic-purple/40 via-stellar-blue/40 to-nebula-pink/40 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-6xl mb-2">🎯</div>
-                            <div className="text-starlight-white/60 text-sm font-medium">Event Image</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Status Badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md border shadow-lg ${
-                          event.status === 'published' ? 'bg-supernova-gold/30 text-supernova-gold border-supernova-gold/50' :
-                          event.status === 'ongoing' ? 'bg-stellar-blue/30 text-stellar-blue border-stellar-blue/50' :
-                          'bg-medium-blue/30 text-silver/60 border-medium-blue/50'
-                        }`}>
-                          ✨ {event.status.toUpperCase()}
-                        </span>
-                      </div>
-
-                      {/* Registration Fee Badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className="px-3 py-1.5 rounded-full text-sm font-bold bg-cosmic-purple/50 text-starlight-white backdrop-blur-md border border-cosmic-purple/60 shadow-lg">
-                          💰 ₹{event.registrationFee || 0}
-                        </span>
-                      </div>
-
-                      {/* Category Badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-stellar-blue/50 text-starlight-white backdrop-blur-md border border-stellar-blue/60 shadow-lg">
-                          🏷️ {event.category}
-                        </span>
-                      </div>
-
-                      {/* Event Title Overlay */}
-                      <div className="absolute bottom-3 right-3 left-20">
-                        <h3 className="text-lg sm:text-xl font-bold text-starlight-white drop-shadow-lg line-clamp-2">
-                          {event.title}
-                        </h3>
-                      </div>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="p-4 sm:p-6 flex-1 flex flex-col">
-                      {/* Event Description */}
-                      <div className="mb-4 flex-1">
-                        <p className="text-starlight-white/80 text-sm leading-relaxed line-clamp-3 mb-4">
-                          {event.description}
-                        </p>
-
-                        {/* Event Details Grid */}
-                        <div className="grid grid-cols-1 gap-3 mb-4">
-                          {/* Date Range */}
-                          <div className="flex items-center gap-3 p-3 bg-stellar-blue/10 rounded-lg border border-stellar-blue/20">
-                            <div className="w-8 h-8 bg-stellar-blue/20 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-stellar-blue text-sm">📅</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-starlight-white/90 text-sm font-medium">Event Duration</div>
-                              <div className="text-starlight-white/60 text-xs">
-                                {new Date(event.startDate).toLocaleDateString('en-US', {
-                                  month: 'short', day: 'numeric', year: 'numeric'
-                                })} - {new Date(event.endDate).toLocaleDateString('en-US', {
-                                  month: 'short', day: 'numeric', year: 'numeric'
-                                })}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Location */}
-                          <div className="flex items-center gap-3 p-3 bg-cosmic-purple/10 rounded-lg border border-cosmic-purple/20">
-                            <div className="w-8 h-8 bg-cosmic-purple/20 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-cosmic-purple text-sm">📍</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-starlight-white/90 text-sm font-medium">Location</div>
-                              <div className="text-starlight-white/60 text-xs truncate">{event.location}</div>
-                            </div>
-                          </div>
-
-                          {/* Participants & Registration Deadline */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-2 p-3 bg-nebula-pink/10 rounded-lg border border-nebula-pink/20">
-                              <div className="w-6 h-6 bg-nebula-pink/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span className="text-nebula-pink text-xs">👥</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-starlight-white/90 text-xs font-medium">Max</div>
-                                <div className="text-starlight-white/60 text-xs">{event.maxParticipants}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 p-3 bg-supernova-gold/10 rounded-lg border border-supernova-gold/20">
-                              <div className="w-6 h-6 bg-supernova-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span className="text-supernova-gold text-xs">⏰</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-starlight-white/90 text-xs font-medium">Deadline</div>
-                                <div className="text-starlight-white/60 text-xs">
-                                  {new Date(event.registrationDeadline).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric'
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Requirements */}
-                        {event.requirements && event.requirements.length > 0 && (
-                          <div className="mb-4">
-                            <div className="text-starlight-white/90 text-sm font-medium mb-2">📋 Requirements</div>
-                            <div className="space-y-1">
-                              {event.requirements.slice(0, 2).map((req: string, index: number) => (
-                                <div key={index} className="text-starlight-white/60 text-xs flex items-start gap-2">
-                                  <span className="text-supernova-gold mt-0.5">•</span>
-                                  <span className="line-clamp-1">{req}</span>
-                                </div>
-                              ))}
-                              {event.requirements.length > 2 && (
-                                <div className="text-starlight-white/40 text-xs">
-                                  +{event.requirements.length - 2} more requirements
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Prizes */}
-                        {event.prizes && event.prizes.length > 0 && (
-                          <div className="mb-4">
-                            <div className="text-starlight-white/90 text-sm font-medium mb-2">🏆 Prizes</div>
-                            <div className="grid grid-cols-1 gap-1">
-                              {event.prizes.slice(0, 3).map((prize: any, index: number) => (
-                                <div key={index} className="flex items-center justify-between p-2 bg-supernova-gold/5 rounded border border-supernova-gold/10">
-                                  <span className="text-starlight-white/70 text-xs">{prize.position}</span>
-                                  <div className="text-right">
-                                    <div className="text-supernova-gold text-xs font-medium">{prize.prize}</div>
-                                    {prize.amount && (
-                                      <div className="text-starlight-white/50 text-xs">₹{prize.amount}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Tags */}
-                        {event.tags && event.tags.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex flex-wrap gap-1.5">
-                              {event.tags.slice(0, 4).map((tag: string, index: number) => (
-                                <span key={index} className="px-2 py-1 bg-cosmic-purple/20 text-cosmic-purple rounded-full text-xs font-medium border border-cosmic-purple/30">
-                                  #{tag}
-                                </span>
-                              ))}
-                              {event.tags.length > 4 && (
-                                <span className="px-2 py-1 bg-starlight-white/10 text-starlight-white/60 rounded-full text-xs">
-                                  +{event.tags.length - 4}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Registration Section */}
-                      <div className="mt-auto pt-4 border-t border-stellar-blue/20">
-                        {/* Registration Status */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-supernova-gold rounded-full animate-pulse"></div>
-                            <span className="text-starlight-white/80 text-sm font-medium">Registration Open</span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-supernova-gold text-lg font-bold">₹{event.registrationFee || 0}</div>
-                            <div className="text-starlight-white/50 text-xs">Registration Fee</div>
-                          </div>
-                        </div>
-
-                        {/* Registration Button */}
-                        <button
-                          onClick={() => setSelectedEvent({
-                            _id: event._id,
-                            title: event.title,
-                            registrationFee: event.registrationFee || 0,
-                            paymentLink: event.paymentLink
-                          })}
-                          className="w-full px-6 py-3.5 bg-gradient-to-r from-supernova-gold via-plasma-orange to-supernova-gold text-space-navy font-bold rounded-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-supernova-gold/40 transform transition-all duration-300 group-hover:from-plasma-orange group-hover:to-supernova-gold relative overflow-hidden"
-                        >
-                          {/* Button shine effect */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-
-                          <div className="relative flex items-center justify-center gap-2">
-                            <span className="text-lg">🚀</span>
-                            <span className="text-base">Register Now</span>
-                            <div className="flex items-center gap-1 text-sm opacity-90">
-                              <span>•</span>
-                              <span>₹{event.registrationFee || 0}</span>
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* Quick Info */}
-                        <div className="mt-3 text-center space-y-1">
-                          <p className="text-starlight-white/60 text-xs">
-                            🎯 Individual & Team registration available
-                          </p>
-                          <p className="text-starlight-white/50 text-xs">
-                            Secure payment • Instant confirmation
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <EventCard key={event._id} event={event} showRegisterButton={false} />
               ))}
             </div>
           ) : (
@@ -540,6 +253,15 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {allEvents.map((event) => (
                       <div key={event._id} className="p-4 bg-space-navy/50 rounded-xl border border-stellar-blue/20 hover:border-supernova-gold/30 transition-colors">
+                        {event.eventImage && (
+                          <div className="h-24 mb-2 overflow-hidden rounded-lg">
+                            <img 
+                              src={event.eventImage} 
+                              alt={event.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                         <div className="flex justify-between items-start mb-2">
                           <h5 className="text-starlight-white font-medium text-sm line-clamp-2 flex-1">{event.title}</h5>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ml-2 flex-shrink-0 ${
@@ -564,29 +286,85 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
                 </div>
               )}
 
-              {/* Call to Action */}
-              <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
-                  onClick={() => setShowRegistrationForm(true)}
-                  className="px-8 py-4 bg-gradient-to-r from-supernova-gold via-plasma-orange to-supernova-gold text-space-navy font-bold rounded-xl hover:scale-105 hover:shadow-xl hover:shadow-supernova-gold/30 transform transition-all duration-300 text-lg relative overflow-hidden group"
+                  onClick={() => setShowEventSelection(true)}
+                  className="px-8 py-3 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-xl shadow-supernova-gold/30"
                 >
-                  {/* Button shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  <div className="relative flex items-center gap-2">
-                    <span>🎯</span>
-                    <span>Pre-Register Now</span>
-                    <span>🚀</span>
-                  </div>
+                  🚀 Register Now
                 </button>
-
-                <p className="text-starlight-white/60 text-sm">
-                  Be the first to know when new events are published!
-                </p>
+                <button
+                  onClick={() => setShowPreQualifierTests(true)}
+                  className="px-8 py-3 border-2 border-electric-blue text-electric-blue font-bold rounded-xl hover:bg-electric-blue hover:text-space-navy transition-all duration-300"
+                >
+                  🎯 Take Pre-Qualifier Tests
+                </button>
               </div>
             </div>
           )}
         </div>
       </section>
+
+      {/* College Promotions */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white/5 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-starlight-white mb-8 sm:mb-12">
+            🎓 Participating Colleges & Universities
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {participatingInstitutions?.filter(inst => inst.type !== 'company').map((institution) => (
+              <div key={institution._id} className="p-4 sm:p-6 bg-dark-blue/40 backdrop-blur-md border border-medium-blue/30 rounded-xl hover:border-accent-blue/40 hover:shadow-xl transition-all duration-300">
+                <div className="text-center">
+                  {institution.logo ? (
+                    <img 
+                      src={institution.logo} 
+                      alt={institution.name}
+                      className="w-16 h-16 mx-auto mb-3 sm:mb-4 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🎓</div>
+                  )}
+                  <h3 className="text-lg sm:text-xl font-bold text-starlight-white mb-2">{institution.name}</h3>
+                  <p className="text-sm sm:text-base text-supernova-gold font-semibold">{institution.type}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sponsors Section */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white/5 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-starlight-white mb-8 sm:mb-12">
+            🏆 Our Sponsors
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {activeSponsors?.map((sponsor) => (
+              <div key={sponsor._id} className="p-4 sm:p-6 bg-dark-blue/40 backdrop-blur-md border border-medium-blue/30 rounded-xl hover:border-accent-blue/40 hover:shadow-xl transition-all duration-300">
+                <div className="text-center">
+                  {sponsor.logo ? (
+                    <img 
+                      src={sponsor.logo} 
+                      alt={sponsor.name}
+                      className="w-16 h-16 mx-auto mb-3 sm:mb-4 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🏆</div>
+                  )}
+                  <h3 className="text-lg sm:text-xl font-bold text-starlight-white mb-2">{sponsor.name}</h3>
+                  <p className="text-sm sm:text-base text-supernova-gold font-semibold">{sponsor.type}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* News & Updates Section */}
+      <NewsUpdatesSection />
 
       {/* Why Participate Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/5 backdrop-blur-sm">
@@ -627,7 +405,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           </p>
           <div className="flex justify-center gap-6">
             <button
-              onClick={() => setShowRegistrationForm(true)}
+              onClick={() => setShowEventSelection(true)}
               className="px-6 py-2 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg hover:scale-105 transform transition-all duration-300"
             >
               Register Now
@@ -662,16 +440,30 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
         </div>
       </footer>
 
-      {/* Registration Form Modal */}
-      {showRegistrationForm && (
-        <ParticipantRegistrationForm onClose={() => setShowRegistrationForm(false)} />
+      {/* Event Selection Modal */}
+      {showEventSelection && (
+        <EventSelectionModal
+          onClose={() => setShowEventSelection(false)}
+          onEventSelect={(eventId) => {
+            setSelectedEventId(eventId);
+            setShowEventSelection(false);
+            setShowSpecificRegistration(true);
+          }}
+        />
       )}
 
-      {/* Event Registration Modal */}
-      {selectedEvent && (
-        <EventRegistrationModal
-          event={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
+      {/* Event-Specific Registration Form */}
+      {showSpecificRegistration && selectedEventId && (
+        <EventSpecificRegistrationForm
+          eventId={selectedEventId}
+          onClose={() => {
+            setShowSpecificRegistration(false);
+            setSelectedEventId(null);
+          }}
+          onBack={() => {
+            setShowSpecificRegistration(false);
+            setShowEventSelection(true);
+          }}
         />
       )}
 

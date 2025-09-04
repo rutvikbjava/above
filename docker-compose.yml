@@ -1,0 +1,25 @@
+services:
+  event-center:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./.env.local:/app/.env.local:ro
+    restart: unless-stopped
+    
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+    depends_on:
+      - event-center

@@ -10,7 +10,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "vite preview --host 0.0.0.0 --port $PORT",
-    "lint": "tsc -p convex -noEmit --pretty false && tsc -p . -noEmit --pretty false && convex dev --once && vite build"
+    "lint": "tsc -p convex -noEmit --pretty false && tsc -p . -noEmit --pretty false && convex dev --once && vite build",
+    "docker:build": "docker build -t event-center .",
+    "docker:run": "docker run -p 3000:3000 event-center",
+    "docker:deploy": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.80",
@@ -20,6 +25,7 @@
     "convex": "^1.24.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.8.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.1.0",
     "xlsx": "^0.18.5"
