@@ -61,7 +61,16 @@ window.addEventListener('message', async (message) => {
         entryFileNames: 'assets/[name]-[hash].js',
       },
     },
-    // Copy _redirects file to dist for Render deployment
+    // Ensure proper MIME types and module handling
+    assetsInlineLimit: 0,
     copyPublicDir: true,
+    target: 'es2020',
+    minify: 'terser',
+    // Ensure proper module format
+    lib: undefined,
+    // Fix potential module issues
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
   },
 }));

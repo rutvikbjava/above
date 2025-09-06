@@ -2,21 +2,25 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --include=dev",
+  "installCommand": "npm install",
   "framework": "vite",
   "env": {
     "NODE_ENV": "production"
   },
   "rewrites": [
     {
-      "source": "/((?!.*\\.).*)",
+      "source": "/((?!api|assets|_next|favicon.ico|.*\\.).*)$",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/(.*\\.(js|mjs|jsx|ts|tsx))$",
       "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
@@ -24,11 +28,42 @@
       ]
     },
     {
-      "source": "/(.*\\.(?:js|mjs))",
+      "source": "/(.*\\.(js|mjs|jsx))$",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*\\.(css|scss))$",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.(css|scss))$",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
