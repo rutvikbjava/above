@@ -11,7 +11,17 @@
 - Moved essential build dependencies to the `dependencies` section in package.json
 - Updated Vercel config to explicitly include dev dependencies during install
 
-### 2. Missing Build Dependencies
+### 2. MIME Type Error (White Screen Issue)
+**Problem**: Browser showing white screen with error: `Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html"`
+
+**Root Cause**: Overly broad rewrite rules in vercel.json were causing ALL requests (including JS/CSS files) to be redirected to index.html
+
+**Solution**: 
+- Fixed rewrite rules to only redirect HTML routes: `/((?!.*\\.).*)`
+- Added proper MIME type headers for JavaScript files
+- Enhanced error handling in main.tsx for missing environment variables
+
+### 3. Missing Build Dependencies
 **Problem**: Build tools like TypeScript, Tailwind CSS, and PostCSS were not available during build
 
 **Solution**: Moved critical build dependencies from devDependencies to dependencies:
@@ -35,9 +45,16 @@
 - Kept only development-specific tools in devDependencies
 
 ### vercel.json
+- Fixed rewrite rules to prevent JS/CSS files from being redirected to index.html
+- Added proper MIME type headers for JavaScript modules
 - Updated install command to include dev dependencies: `npm install --include=dev`
 - Added NODE_ENV environment variable
 - Maintained proper rewrites for SPA routing
+
+### main.tsx
+- Enhanced error handling for missing VITE_CONVEX_URL
+- Added user-friendly error display in DOM when environment variables are missing
+- Improved debugging with environment variable logging
 
 ## Deployment Steps
 
@@ -66,13 +83,18 @@ After deployment, verify:
 - [ ] Vite command is found during build
 - [ ] All dependencies are installed correctly
 - [ ] Environment variables are properly set
-- [ ] Application loads without errors
+- [ ] Application loads without MIME type errors
+- [ ] JavaScript modules load correctly
+- [ ] No white screen on initial load
+- [ ] SPA routing works properly
 
 ## Common Issues
 
 1. **If build still fails**: Check that all environment variables are set in Vercel dashboard
 2. **If app shows blank page**: Verify VITE_CONVEX_URL is correctly set
 3. **If routing doesn't work**: Ensure vercel.json rewrites are in place
+4. **If MIME type errors persist**: Check that rewrite rules are not too broad
+5. **If JavaScript fails to load**: Verify proper MIME type headers are set
 
 ## Additional Notes
 
