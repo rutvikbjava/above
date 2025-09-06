@@ -47,7 +47,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-2 xl:gap-4">
               <button
-                onClick={() => setShowEventSelection(true)}
+                onClick={() => window.open('https://erp.mgmu.ac.in/asd_EventPublicUserMaster.htm?eventID=152', '_blank', 'noopener,noreferrer')}
                 className="px-3 xl:px-6 py-2 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg hover:scale-105 transform transition-all duration-300 shadow-lg backdrop-blur-sm text-sm xl:text-base"
               >
                 Register Now
@@ -106,7 +106,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
               <div className="px-4 py-4 space-y-3">
                 <button
                   onClick={() => {
-                    setShowEventSelection(true);
+                    window.open('https://erp.mgmu.ac.in/asd_EventPublicUserMaster.htm?eventID=152', '_blank', 'noopener,noreferrer');
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full px-4 py-3 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg text-center touch-manipulation"
@@ -175,7 +175,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           <div className="relative z-10">
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-12 px-2 sm:px-0">
               <button
-                onClick={() => setShowEventSelection(true)}
+                onClick={() => window.open('https://erp.mgmu.ac.in/asd_EventPublicUserMaster.htm?eventID=152', '_blank', 'noopener,noreferrer')}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl shadow-supernova-gold/40 backdrop-blur-md border border-white/20 min-h-[48px] touch-manipulation"
               >
                 🚀 Register for Technical Fest
@@ -288,7 +288,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
-                  onClick={() => setShowEventSelection(true)}
+                  onClick={() => window.open('https://erp.mgmu.ac.in/asd_EventPublicUserMaster.htm?eventID=152', '_blank', 'noopener,noreferrer')}
                   className="px-8 py-3 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-xl shadow-supernova-gold/30"
                 >
                   🚀 Register Now
@@ -405,7 +405,7 @@ export function ParticipantLandingPage({ onSwitchToOrganizer }: ParticipantLandi
           </p>
           <div className="flex justify-center gap-6">
             <button
-              onClick={() => setShowEventSelection(true)}
+              onClick={() => window.open('https://erp.mgmu.ac.in/asd_EventPublicUserMaster.htm?eventID=152', '_blank', 'noopener,noreferrer')}
               className="px-6 py-2 bg-gradient-to-r from-supernova-gold to-plasma-orange text-space-navy font-bold rounded-lg hover:scale-105 transform transition-all duration-300"
             >
               Register Now
